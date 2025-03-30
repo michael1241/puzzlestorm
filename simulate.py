@@ -2,6 +2,7 @@ import random
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import matplotlib.ticker as ticker
 
 # plt.style.use('dark_background') # for title image
 
@@ -79,28 +80,43 @@ def run_multiple_simulations(accuracies, times_spent, num_simulations=1000):
 
 
 def plot_accuracy_lines(results_avg_df, results_std_df):
+
     plt.figure(figsize=(12, 7))
-    times_spent_values = results_avg_df.index
+    times_spent_values = results_avg_df.index.values
+
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    colors = prop_cycle.by_key()['color']
 
     for n, accuracy_col in enumerate(results_avg_df.columns):
-        avg_scores = results_avg_df[accuracy_col]
-        std_devs = results_std_df[accuracy_col]
-        errstart = ((n+1) % 2)
-        plt.errorbar(times_spent_values, avg_scores, #yerr=std_devs, errorevery=(errstart, 2),
-                     label=f'{accuracy_col*100:.0f}%',
-                     fmt='-o',
-                     capsize=3,
-                     elinewidth=1,
-                     markersize=4)
+        avg_scores = results_avg_df[accuracy_col].values
+        std_devs = results_std_df[accuracy_col].values
+
+        lower_bound = avg_scores - std_devs
+        upper_bound = avg_scores + std_devs
+
+        color = colors[n % len(colors)]
+
+        plt.plot(times_spent_values, avg_scores,
+                 label=f'{accuracy_col*100:.0f}%',
+                 marker='o',
+                 linestyle='-',
+                 color=color,
+                 markersize=4)
+
+        plt.fill_between(times_spent_values, lower_bound, upper_bound,
+                         color=color,
+                         alpha=0.2)
 
     plt.xlabel('Time Spent per Puzzle (s)')
-    plt.ylabel('Average Score')# with +/- 1 Std Dev)')
-    plt.title('Puzzle Storm: Average Score vs. Time Per Puzzle')# (with Standard Deviation)')
+    plt.ylabel('Average Score')
+    plt.title('Puzzle Storm: Average Score vs. Time Per Puzzle (Shaded Area = +/- 1 Std Dev)')
     plt.legend(title='Accuracy')
     plt.grid(True, linestyle='--', alpha=0.6)
+
     plt.xticks(times_spent_values[1:], rotation=45)
+    plt.xlim(times_spent_values.min(), times_spent_values.max()) # Set limits based on data
     plt.minorticks_on()
-    plt.locator_params(axis='x', nbins=5) 
+    plt.locator_params(axis='x', nbins=5)
     plt.show()
 
 def plot_score_contours(results_avg_df, accuracies, times_spent):
@@ -114,13 +130,14 @@ def plot_score_contours(results_avg_df, accuracies, times_spent):
     ax.set_xlabel('Time Spent per Puzzle (s)')
     ax.set_ylabel('Accuracy')
     ax.set_title('Puzzle Storm: Equivalent Score Contours')
+    ax.set_yticklabels(['{:,.0%}'.format(x) for x in ax.get_yticks()])
     ax.grid(True, linestyle='--', alpha=0.6)
     plt.tight_layout()
     # plt.grid(visible=None) # for title image
     plt.show()
 
-accuracies = [i / 100 for i in reversed(range(70, 101, 10))] #50, 101, 10 for first graphs
-times_spent = [x / 2.0 for x in range(1, 14)]
+accuracies = [i / 100 for i in reversed(range(50, 101, 10))] #50, 101, 10 for first graphs, 70, 101, 10 for contour
+times_spent = [x / 2.0 for x in range(1, 20)] #20 for first graphs, 14 for contour
 num_simulations_per_point = 1000
 
 
