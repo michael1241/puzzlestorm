@@ -82,11 +82,11 @@ def plot_accuracy_lines(results_avg_df, results_std_df):
     plt.figure(figsize=(12, 7))
     times_spent_values = results_avg_df.index
 
-    for accuracy_col in results_avg_df.columns:
+    for n, accuracy_col in enumerate(results_avg_df.columns):
         avg_scores = results_avg_df[accuracy_col]
         std_devs = results_std_df[accuracy_col]
-
-        plt.errorbar(times_spent_values, avg_scores, yerr=std_devs,
+        errstart = ((n+1) % 2)
+        plt.errorbar(times_spent_values, avg_scores, #yerr=std_devs, errorevery=(errstart, 2),
                      label=f'{accuracy_col*100:.0f}%',
                      fmt='-o',
                      capsize=3,
@@ -94,21 +94,20 @@ def plot_accuracy_lines(results_avg_df, results_std_df):
                      markersize=4)
 
     plt.xlabel('Time Spent per Puzzle (s)')
-    plt.ylabel('Average Score with +/- 1 Std Dev)')
-    plt.title('Puzzle Storm: Average Score vs. Time Per Puzzle (with Standard Deviation)')
+    plt.ylabel('Average Score')# with +/- 1 Std Dev)')
+    plt.title('Puzzle Storm: Average Score vs. Time Per Puzzle')# (with Standard Deviation)')
     plt.legend(title='Accuracy')
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.xticks(times_spent_values, rotation=45)
+    plt.xticks(times_spent_values[1:], rotation=45)
+    plt.minorticks_on()
+    plt.locator_params(axis='x', nbins=5) 
     plt.show()
 
 def plot_score_contours(results_avg_df, accuracies, times_spent):
     fig, ax = plt.subplots(figsize=(10, 7))
     X, Y = np.meshgrid(times_spent, accuracies)
     Z = results_avg_df.values.T
-    min_score = np.floor(Z.min())
-    max_score = np.ceil(Z.max())
-    levels = np.linspace(min_score, max_score, 41)
-    levels = np.round(levels).astype(int)
+    levels = np.arange(20, 150, 10)
 
     CS = ax.contour(X, Y, Z, levels=levels, cmap='viridis')
     ax.clabel(CS, inline=True, fontsize=9, fmt='%d')
@@ -120,9 +119,9 @@ def plot_score_contours(results_avg_df, accuracies, times_spent):
     # plt.grid(visible=None) # for title image
     plt.show()
 
-accuracies = [i / 100 for i in reversed(range(50, 101, 5))]
-times_spent = [x / 2.0 for x in range(1, 20)]
-num_simulations_per_point = 500
+accuracies = [i / 100 for i in reversed(range(70, 101, 10))] #50, 101, 10 for first graphs
+times_spent = [x / 2.0 for x in range(1, 14)]
+num_simulations_per_point = 1000
 
 
 simulation_avg_results, simulation_std_results = run_multiple_simulations(
